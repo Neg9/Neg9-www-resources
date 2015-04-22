@@ -11,5 +11,6 @@ All content it publicly available from https://neg9.org/resources/ or directly f
   * Filenames SHOULD be in the format of ``[ISO-8601-Date]_[ContentCreator-With-Hyphens]_[Content-Title-With-Hyphens].[extension]``, e.g.:
     * ``2015-04-15_Neg9-tecknicaltom-meta_CTF-Toolkit.pdf``
 * **/media**: Screenshots or other graphics, audio files, etc. that may be used in news postings for CTF writeups, etc.
-  * Filenames SHOULD be in the format of ``[NewsItem-SLUG]_[File-Description].[extension]``, e.g.:
-    * ``plaidctf-2015-re-gex-reversing-250-writeup_awesome-z3-screenshot.png``
+  * Files should be placed in a directory in the name of the news item SLUG, if appropriate.
+  * File paths SHOULD be in the format of ``[NewsItem-SLUG]/[File-Description].[extension]``, e.g.:
+    * ``plaidctf-2015-eces-revenge2-misc-250-writeup/ModelSim-01.png``
