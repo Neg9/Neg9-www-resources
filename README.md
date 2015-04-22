@@ -26,22 +26,23 @@ All content it publicly available from https://neg9.org/resources/ or directly f
 
 * The resources directory is served up directly via NGINX, without going through any Django/Python, using NGINX's optimized settings for doing what it unequivocally does best.. serve static content:
 
-    	# Don't allow HTTP access to the submodule's .git* or README* files
-    	location ~* ^/resources/(.git|README) {
-    		return 404;
-    	}
-    
-    	# More dynamic content used on news posts and such (presentations,
-    screenshots, etc.)
-    	location /resources/ {
-    		rewrite ^/resources/(.*)$ /$1 break;
-    		root /var/www/neg9.org/resources;
-    		add_header Vary Accept-Encoding;
-    		expires 1h;
-    		sendfile on;
-    		tcp_nopush on;
-    		tcp_nodelay on;
-    	}
+```nginx
+ # Don't allow HTTP access to the submodule's .git* or README* files
+ location ~* ^/resources/(.git|README) {
+  return 404;
+ }
+
+ # More dynamic content used on news posts and such (presentations, screenshots, etc.)
+ location /resources/ {
+  rewrite ^/resources/(.*)$ /$1 break;
+  root /var/www/neg9.org/resources;
+  add_header Vary Accept-Encoding;
+  expires 1h;
+  sendfile on;
+  tcp_nopush on;
+  tcp_nodelay on;
+ }
+```
 
 ## Organizational standards:
 
