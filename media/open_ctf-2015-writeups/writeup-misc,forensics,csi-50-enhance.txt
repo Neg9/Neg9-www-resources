@@ -1,0 +1,33 @@
+Neg9 - craSH
+
+Enhance 50
+
+Hint:
+We think this woman might be a license dodger - can you find out where she's hiding? 172.16.18.20/enhance-50e7818433c4e832e0e96e91dc4cb64c 
+
+The asset file for this challenge is a JPEG photo of a woman's face, as seen below (resized):
+
+[open_ctf-2015-misc,forensics,csi-50-enhance_resized.jpg]
+
+(Original (12mb) file)[open_ctf-2015-misc,forensics,csi-50-enhance_orig.jpg]
+
+Open the graphic file in an editor such as Gimp, note that there is a "reflection" of a QR Code in the subject's left eye (on the right side of the graphic):
+
+Zoom in on this, crop the QR code out.
+
+There's some reflection present diagonally across the QR code, as well as some background color that makes it impossible to scan, this can be seen below:
+
+[open_ctf-2015-misc,forensics,csi-50-enhance_qrcode-unedited-cropped.png]
+
+With the cropped QR code, use Gimp's "Threshold" tool (Color -> Threshold), slide the threshold down until the QR code looks more reasonable (Values 112 / 255):
+
+[open_ctf-2015-misc,forensics,csi-50-enhance_qrcode-gimp-threshold.png]
+
+And the final "enhanced" QR code looks like so:
+
+[open_ctf-2015-misc,forensics,csi-50-enhance_qrcode-cropped.png]
+
+The "enhanced" version of the QR code can be scanned with any QR code reader, such as "Barcode Scanner" on Android. It then decodes as: Ju5tPr1ntTheDAmNTh1n6 (Just Print The Damn Thing)
+
+The flag is:
+Ju5tPr1ntTheDAmNTh1n6 
