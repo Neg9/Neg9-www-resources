@@ -1,0 +1,65 @@
+Veritable Buzz 1 (300 points)
+     Central Licensing is now hip to social media fashions! We are very trendy, with the help of Social Media Experts Group!
+      http://172.16.18.20/veritable_buzz-bbe62d344fc330ac716b8b4c955c2e68.html 
+
+Writeup by ReidB of Neg9 (http://neg9.org/)  
+
+You are given a website with 12 messages. In the source, each message contains a suspicious “signature” string:
+Students reported that students post to discussion forums more frequently and are irrevocable provided the stated conditions are met.
+
+     <div class="signature" style="display:none;" data-sig="a0289c0fa7e87f1ab1e94b577f43691ebd70c04b0e62ca7eaaf1791983d512e7bbc843ee3a2a0430455e9f755f832ccdcd7a46d769ee43467a01453214868094ca228cb5eebc953a39fb9bbaf865f4dbe1dad9b5f9f1bed75671e0db5433f0ed" data-pubkey="pub-f4c74a1c7c00fb118e5a50c9ab966f9d.pem">
+
+data-pubkey points to a PEM file that is a Base64 encoded “public key” of some sort:
+
+     -----BEGIN PUBLIC KEY-----
+     MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEYlsc6dc6ucsFVJavUphpKc350ISuwGUh
+     uD1MYO9TpbdF+KghCWkbBCDdK7lt5VKdOnYZKaIQ8n7J2kHaFQnVsk7Drh9zDL09
+     CDEqLYiqU9qRSd14/TCda1fAIH4vgRO1
+     -----END PUBLIC KEY-----
+
+A quick round-trip through an ASN.1 decoder (like https://lapo.it/asn1js/) reveals that the key is an ECDSA public key over the NIST P-384 curve. Simple examination of the public key doesn’t reveal anything suspicious.
+Instead, the embedded signatures were examined. Through trial and error with Pure-Python ECDSA (https://github.com/warner/python-ecdsa) it was determined that the signatures are valid when the supplied string is stripped of leading & trailing whitespace, hashed with SHA1, and then signed with the ECDSA private key:
+
+     public_key_ec_pem = '''
+	-----BEGIN PUBLIC KEY-----
+	MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEYlsc6dc6ucsFVJavUphpKc350ISuwGUh
+	uD1MYO9TpbdF+KghCWkbBCDdK7lt5VKdOnYZKaIQ8n7J2kHaFQnVsk7Drh9zDL09
+	CDEqLYiqU9qRSd14/TCda1fAIH4vgRO1
+	-----END PUBLIC KEY-----
+	'''.strip()
+	txt1 = "Students reported that students post to discussion forums more frequently and are irrevocable provided the stated conditions are met."
+	sig1 = '''a0289c0fa7e87f1ab1e94b577f43691ebd70c04b0e62ca7eaaf1791983d512e7bbc843ee3a2a0430455e9f755f832ccdcd7a46d769ee43467a01453214868094ca228cb5eebc953a39fb9bbaf865f4dbe1dad9b5f9f1bed75671e0db5433f0ed'''.strip().decode('hex')
+	public_key_ec = VerifyingKey.from_pem(public_key_ec_pem)
+	print "Verify1: " + str(public_key_ec.verify(sig1, txt1))
+
+There are a few common errors with ECDSA, and a quick review of the signatures reveals the likely weakness…each signature supplied begins with the same 24-byte preamble:
+
+     a0289c0fa7e87f1ab1e94b577f43691ebd70c04b0e62ca7eaaf1791983d512e7bbc843ee3a2a0430455e9f755f832ccd […]
+
+The first portion of any ECDSA signature is the r parameter of the computation, which is directly generated from a secret nonce created during the signing process. It is critical to the security of ECDSA that the secret nonce never be repeated, otherwise it becomes possible to calculate the private key from the duplicate signature. This is the same fatal misuse of ECDSA that caused the Playstation 3 security breach. 
+Antonio Bianchi of the Strange Things blog (http://antonio-bc.blogspot.com/2013/12/mathconsole-ictf-2013-writeup.html) provided a writeup of a challenge he created for the iCTF 2015 competition. This had exploit code for an almost identical vulnerability, with the exception of being written for the NIST P-192 curve. 
+Only two small modifications were necessary to adapt the code to this larger curve length. Extraction offsets of the r and s values needed to change to 0-47 and 48-95 respectively (zero-based index). Additionally, the call to Pure-Python ECDSA’s SigningKey.from_secret_exponent needed to explicitly select the new curve, otherwise an early assertion error is encountered:
+
+     File "C:\Python27\lib\site-packages\ecdsa-0.13-py2.7.egg\ecdsa\keys.py", line 137, in from_secret_exponent
+       assert 1 <= secexp < n
+     AssertionError
+
+Cracking the private key provided us with a candidate private key that is easily validated by performing the same attack against a second pair of signatures and verifying that they are identical:
+
+     -----BEGIN EC PRIVATE KEY-----
+     MIGkAgEBBDAAY2gwczNuX2J5X2Y0aXJfZGljZV9yb2xsX2d1cmFudDMzZF90b19i
+     ZV9yQG5kMG2gBwYFK4EEACKhZANiAARiWxzp1zq5ywVUlq9SmGkpzfnQhK7AZSG4
+     PUxg71Olt0X4qCEJaRsEIN0ruW3lUp06dhkpohDyfsnaQdoVCdWyTsOuH3MMvT0I
+     MSotiKpT2pFJ3Xj9MJ1rV8Agfi+BE7U=
+     -----END EC PRIVATE KEY-----
+
+One interesting aspect of ECDSA is that private keys can be generated from arbitrary inputs. This private key has a suspicious d(sub)a component, it is all within the printable character space:
+
+     0063683073336E5F62795F663469725F646963655F726F6C6C5F677572616E743333645F746F5F62655F72406E64306D
+
+ASCII decoding this value reveals the flag (a nod to https://xkcd.com/221/):
+
+     ch0s3n_by_f4ir_dice_roll_gurant33d_to_be_r@nd0m
+
+(exploit code provided separately)
+

@@ -1,0 +1,30 @@
+stego,forensics-50-magic_eye.dat
+-- hackworth
+
+The file is a corrupted PNG file. 
+
+The solution is the following:
+	Open the file using pypng.
+	Extract the data from the IDAT chuck.
+	Decompress the extracted data with gzip.zlib.
+	Flag is at the end of the text.
+
+Flag: some_flag_goes_here
+
+
+The solution code is:
+
+#!/usr/bin/env python
+
+import png
+import gzip
+
+image = png.Reader("./magic_eye-e5a34090f3a6fe71248e30720132aaad")
+
+preamble = image.preamble()
+(t, d) = image.chunk()
+
+print(gzip.zlib.decompress(d))
+
+
+
